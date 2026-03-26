@@ -1,0 +1,1678 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0"/>
+<title>ZPv Hub</title>
+<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='14' fill='%231a1a1c'/%3E%3Crect x='18' y='30' width='28' height='22' rx='6' fill='%23FF6154'/%3E%3Cpath d='M24 30v-7a8 8 0 0 1 16 0v7' fill='none' stroke='%23FF6154' stroke-width='3' stroke-linecap='round'/%3E%3Ctext x='32' y='46' dominant-baseline='middle' text-anchor='middle' font-family='Georgia,serif' font-weight='700' font-size='13' fill='white'%3EZ%3C/text%3E%3C/svg%3E"/>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/jszip/3.10.1/jszip.min.js"></script>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Serif+Display&display=swap');
+
+  :root {
+    --bg: #0f0f10;
+    --surface: #1a1a1c;
+    --surface2: #222226;
+    --border: #2e2e33;
+    --accent: #FF6154;
+    --accent2: #ff8a7a;
+    --text: #f0f0f2;
+    --muted: #888890;
+    --radius: 12px;
+    --font: 'DM Sans', sans-serif;
+  }
+
+  /* ── AMOLED THEMES ── */
+  body.theme-pure-black { --bg:#000000; --surface:#0d0d0d; --surface2:#141414; --border:#1e1e1e; --accent:#FF6154; --accent2:#ff8a7a; }
+  body.theme-cyber-teal { --bg:#000000; --surface:#001414; --surface2:#001f1f; --border:#003030; --accent:#00e5cc; --accent2:#4dfff0; --text:#e0faf8; --muted:#4a9b92; }
+  body.theme-neon-violet { --bg:#000000; --surface:#0d0010; --surface2:#130019; --border:#220033; --accent:#b94fff; --accent2:#d47aff; --text:#f5e6ff; --muted:#7a4a99; }
+  body.theme-amber-dark { --bg:#000000; --surface:#100e00; --surface2:#1a1500; --border:#2d2500; --accent:#FFB300; --accent2:#ffd04d; --text:#fff9e6; --muted:#8a7533; }
+  body.theme-blood-red { --bg:#000000; --surface:#100000; --surface2:#1a0000; --border:#2d0000; --accent:#ff1744; --accent2:#ff6680; --text:#ffe6ea; --muted:#8a334a; }
+  body.theme-ice-blue { --bg:#000000; --surface:#00080f; --surface2:#000f1a; --border:#001a30; --accent:#40c4ff; --accent2:#80d8ff; --text:#e6f7ff; --muted:#336a8a; }
+  body.theme-toxic-green { --bg:#000000; --surface:#000f00; --surface2:#001800; --border:#002800; --accent:#39ff14; --accent2:#7dff5c; --text:#e6ffe6; --muted:#338a33; }
+  body.theme-rose-gold { --bg:#000000; --surface:#100808; --surface2:#1a0f0f; --border:#2d1a1a; --accent:#ff6b9d; --accent2:#ffadc9; --text:#ffe6f0; --muted:#8a4466; }
+  body.theme-deep-space { --bg:#000000; --surface:#07050f; --surface2:#0e0a1a; --border:#1a1530; --accent:#7c83ff; --accent2:#aeb3ff; --text:#eceeff; --muted:#5a5a99; }
+
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body { background: var(--bg); color: var(--text); font-family: var(--font); min-height: 100vh; overflow-x: hidden; }
+
+  /* ── SCROLLBAR ── */
+  ::-webkit-scrollbar { width: 5px; }
+  ::-webkit-scrollbar-track { background: var(--bg); }
+  ::-webkit-scrollbar-thumb { background: var(--border); border-radius: 99px; }
+
+  /* ── LOGIN ── */
+  #loginScreen {
+    min-height: 100vh;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background: radial-gradient(ellipse 80% 60% at 50% 0%, #ff615422 0%, transparent 70%), var(--bg);
+  }
+  .login-box {
+    background: var(--surface);
+    border: 1px solid var(--border);
+    border-radius: 20px;
+    padding: 44px 36px;
+    width: 100%;
+    max-width: 380px;
+    box-shadow: 0 40px 80px #00000088;
+    animation: fadeUp .5s ease;
+  }
+  .logo-badge {
+    width: 72px; height: 72px;
+    background: var(--surface2);
+    border-radius: 18px;
+    display: flex; align-items: center; justify-content: center;
+    margin: 0 auto 20px;
+    box-shadow: 0 8px 24px #ff615433;
+    border: 1.5px solid var(--accent);
+  }
+  .login-box h1 { text-align: center; font-size: 22px; font-weight: 700; margin-bottom: 4px; }
+  .login-box p { text-align: center; color: var(--muted); font-size: 13px; margin-bottom: 28px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; font-weight: 600; color: var(--muted); margin-bottom: 6px; text-transform: uppercase; letter-spacing: .5px; }
+  .field input {
+    width: 100%; padding: 11px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-family: var(--font); font-size: 14px;
+    outline: none; transition: border-color .2s;
+  }
+  .field input:focus { border-color: var(--accent); }
+  .btn-primary {
+    width: 100%; padding: 12px;
+    background: var(--accent); color: #fff;
+    border: none; border-radius: var(--radius); font-family: var(--font);
+    font-size: 15px; font-weight: 600; cursor: pointer;
+    transition: background .2s, transform .1s, box-shadow .2s;
+    box-shadow: 0 4px 16px #ff615444;
+    margin-top: 4px;
+  }
+  .btn-primary:hover { background: #ff4a3a; box-shadow: 0 6px 24px #ff615466; }
+  .btn-primary:active { transform: scale(.98); }
+  .btn-primary:disabled { opacity: .6; cursor: not-allowed; }
+  .err-msg { color: #ff6b6b; font-size: 12px; text-align: center; margin-top: 10px; min-height: 18px; }
+
+  /* ── APP SHELL ── */
+  #app { display: none; flex-direction: column; min-height: 100vh; }
+
+  /* ── TOPBAR ── */
+  .topbar {
+    position: sticky; top: 0; z-index: 100;
+    background: #0f0f10ee;
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+    padding: 0 16px;
+    height: 56px;
+    display: flex; align-items: center; gap: 12px;
+  }
+  .topbar-logo {
+    width: 36px; height: 36px; background: var(--surface2); border-radius: 9px;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0; border: 1.5px solid var(--accent);
+    box-shadow: 0 2px 10px #ff615433;
+  }
+  .topbar-title { font-size: 16px; font-weight: 700; letter-spacing: -.3px; flex: 1; }
+  .topbar-title span { color: var(--accent); }
+  .icon-btn {
+    width: 36px; height: 36px; border-radius: 9px;
+    background: var(--surface); border: 1px solid var(--border);
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; transition: background .15s; flex-shrink: 0; color: var(--text);
+  }
+  .icon-btn:hover { background: var(--surface2); }
+  .icon-btn svg { width: 18px; height: 18px; }
+
+  /* ── BREADCRUMB ── */
+  .breadcrumb {
+    padding: 10px 16px;
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; color: var(--muted); overflow-x: auto; white-space: nowrap;
+  }
+  .breadcrumb::-webkit-scrollbar { display: none; }
+  .bc-item { cursor: pointer; transition: color .15s; }
+  .bc-item:hover { color: var(--text); }
+  .bc-item.active { color: var(--text); font-weight: 600; }
+  .bc-sep { color: var(--border); }
+
+  /* ── TOOLBAR ── */
+  .toolbar {
+    padding: 8px 16px;
+    display: flex; align-items: center; gap: 8px; flex-wrap: wrap;
+  }
+  .toolbar-left { display: flex; align-items: center; gap: 8px; flex: 1; }
+  .toolbar-right { display: flex; align-items: center; gap: 8px; }
+  .chip {
+    padding: 6px 14px; border-radius: 99px;
+    font-size: 13px; font-weight: 500; cursor: pointer;
+    border: 1px solid var(--border); background: var(--surface);
+    color: var(--muted); transition: all .15s; white-space: nowrap;
+  }
+  .chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+  .chip:hover:not(.active) { border-color: var(--accent); color: var(--text); }
+  .select-info {
+    font-size: 13px; color: var(--accent); font-weight: 600; white-space: nowrap;
+  }
+
+  /* ── BULK ACTION BAR ── */
+  .bulk-bar {
+    display: none;
+    position: fixed; bottom: 80px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 99px; padding: 10px 20px;
+    gap: 16px; align-items: center; z-index: 200;
+    box-shadow: 0 8px 32px #00000088;
+    white-space: nowrap;
+  }
+  .bulk-bar.show { display: flex; animation: fadeUp .2s ease; }
+  .bulk-btn {
+    display: flex; align-items: center; gap: 6px;
+    font-size: 13px; font-weight: 600; cursor: pointer;
+    padding: 6px 12px; border-radius: 99px; border: none;
+    background: transparent; color: var(--text); font-family: var(--font);
+    transition: background .15s;
+  }
+  .bulk-btn:hover { background: var(--surface2); }
+  .bulk-btn.danger { color: #ff6b6b; }
+  .bulk-btn svg { width: 16px; height: 16px; }
+
+  /* ── GRID ── */
+  .media-grid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+    gap: 10px; padding: 8px 16px 100px;
+  }
+  @media(min-width:600px) { .media-grid { grid-template-columns: repeat(auto-fill, minmax(180px, 1fr)); } }
+
+  .media-card {
+    position: relative; border-radius: var(--radius); overflow: hidden;
+    background: var(--surface); border: 1px solid var(--border);
+    cursor: pointer; transition: transform .15s, border-color .15s;
+    aspect-ratio: 1;
+  }
+  .media-card:hover { transform: scale(1.02); border-color: #444; }
+  .media-card.selected { border-color: var(--accent); box-shadow: 0 0 0 2px var(--accent); }
+  .media-card img, .media-card video {
+    width: 100%; height: 100%; object-fit: cover; display: block;
+  }
+  .card-overlay {
+    position: absolute; inset: 0;
+    background: linear-gradient(to top, #000000bb 0%, transparent 50%);
+    pointer-events: none;
+  }
+  .card-check {
+    position: absolute; top: 8px; left: 8px;
+    width: 22px; height: 22px; border-radius: 50%;
+    background: #000000aa; border: 2px solid #fff;
+    display: flex; align-items: center; justify-content: center;
+    transition: all .15s;
+  }
+  .media-card.selected .card-check { background: var(--accent); border-color: var(--accent); }
+  .card-fav {
+    position: absolute; top: 8px; right: 8px;
+    color: #ffffff88; transition: color .15s;
+  }
+  .card-fav.active { color: #FFD700; }
+  .card-fav svg { width: 18px; height: 18px; filter: drop-shadow(0 1px 3px #000a); }
+  .card-type-badge {
+    position: absolute; bottom: 8px; left: 8px;
+    background: #000000aa; border-radius: 6px; padding: 2px 7px;
+    font-size: 11px; font-weight: 600; color: #ffffffcc; letter-spacing: .3px;
+  }
+  .card-actions {
+    position: absolute; bottom: 8px; right: 8px;
+    display: flex; gap: 6px;
+  }
+  .card-action-btn {
+    width: 28px; height: 28px; border-radius: 8px;
+    background: #000000aa; display: flex; align-items: center; justify-content: center;
+    color: #ffffffcc; transition: background .15s;
+  }
+  .card-action-btn:hover { background: var(--accent); color: #fff; }
+  .card-action-btn svg { width: 14px; height: 14px; }
+
+  /* ── FOLDER CARD ── */
+  .folder-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 16px;
+    display: flex; align-items: center; gap: 10px;
+    cursor: pointer; transition: all .15s;
+  }
+  .folder-card:hover { border-color: var(--accent); background: var(--surface2); }
+  .folder-icon { color: var(--accent); flex-shrink: 0; }
+  .folder-icon svg { width: 28px; height: 28px; }
+  .folder-name { font-size: 14px; font-weight: 600; flex: 1; }
+  .folder-meta { font-size: 12px; color: var(--muted); }
+  .folder-del { color: var(--muted); padding: 4px; border-radius: 6px; transition: color .15s; }
+  .folder-del:hover { color: #ff6b6b; }
+  .folder-del svg { width: 16px; height: 16px; }
+
+  .folders-grid {
+    display: grid; grid-template-columns: repeat(auto-fill, minmax(180px, 1fr));
+    gap: 10px; padding: 8px 16px 0;
+  }
+
+  /* ── FAB ── */
+  .fab {
+    position: fixed; bottom: 24px; right: 20px; z-index: 100;
+    width: 52px; height: 52px; border-radius: 50%;
+    background: var(--accent); color: #fff; border: none;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; box-shadow: 0 6px 24px #ff615466;
+    transition: transform .15s, box-shadow .15s;
+    font-family: var(--font);
+  }
+  .fab:hover { transform: scale(1.08); box-shadow: 0 8px 32px #ff615488; }
+  .fab svg { width: 24px; height: 24px; }
+
+  /* ── FAB MENU ── */
+  .fab-menu {
+    position: fixed; bottom: 84px; right: 20px; z-index: 100;
+    display: none; flex-direction: column; align-items: flex-end; gap: 10px;
+  }
+  .fab-menu.open { display: flex; animation: fadeUp .2s ease; }
+  .fab-menu-item {
+    display: flex; align-items: center; gap: 10px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 99px; padding: 10px 16px;
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    box-shadow: 0 4px 16px #00000055;
+    transition: background .15s; white-space: nowrap;
+  }
+  .fab-menu-item:hover { background: var(--surface2); }
+  .fab-menu-item svg { width: 18px; height: 18px; color: var(--accent); }
+
+  /* ── MODAL BASE ── */
+  .modal-overlay {
+    position: fixed; inset: 0; background: #000000cc;
+    z-index: 300; display: none;
+    align-items: center; justify-content: center;
+    padding: 16px;
+    backdrop-filter: blur(4px);
+  }
+  .modal-overlay.open { display: flex; animation: fadein .2s ease; }
+  .modal {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: 20px; padding: 28px 24px;
+    width: 100%; max-width: 400px;
+    box-shadow: 0 20px 60px #000000aa;
+    animation: fadeUp .25s ease;
+  }
+  .modal h2 { font-size: 18px; font-weight: 700; margin-bottom: 16px; }
+  .modal-actions { display: flex; gap: 10px; margin-top: 20px; justify-content: flex-end; }
+  .btn-ghost {
+    padding: 9px 18px; border-radius: var(--radius);
+    background: transparent; border: 1px solid var(--border);
+    color: var(--text); font-family: var(--font); font-size: 14px;
+    cursor: pointer; transition: background .15s;
+  }
+  .btn-ghost:hover { background: var(--surface2); }
+  .btn-danger {
+    padding: 9px 18px; border-radius: var(--radius);
+    background: #ff4444; border: none; color: #fff;
+    font-family: var(--font); font-size: 14px; cursor: pointer;
+    transition: background .15s;
+  }
+  .btn-danger:hover { background: #e03333; }
+
+  /* ── LIGHTBOX / VIDEO PLAYER ── */
+  #lightbox {
+    position: fixed; inset: 0; background: #000000ee;
+    z-index: 500; display: none;
+    flex-direction: column;
+  }
+  #lightbox.open { display: flex; animation: fadein .2s ease; }
+  .lb-topbar {
+    height: 56px; display: flex; align-items: center;
+    padding: 0 16px; gap: 12px;
+    background: linear-gradient(to bottom, #000000bb, transparent);
+    position: absolute; top: 0; left: 0; right: 0; z-index: 10;
+  }
+  .lb-title { flex: 1; font-size: 13px; font-weight: 500; color: #ffffffcc; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .lb-close {
+    width: 36px; height: 36px; border-radius: 50%;
+    background: #ffffff22; border: none; color: #fff;
+    display: flex; align-items: center; justify-content: center; cursor: pointer;
+  }
+  .lb-body {
+    flex: 1; display: flex; align-items: center; justify-content: center;
+    position: relative; overflow: hidden;
+  }
+  #lbImg {
+    max-width: 100%; max-height: 100vh; object-fit: contain;
+    display: none; user-select: none;
+    touch-action: pinch-zoom;
+  }
+  #lbVideo {
+    max-width: 100%; max-height: 100vh; display: none;
+    outline: none;
+  }
+  .lb-nav {
+    position: absolute; top: 50%; transform: translateY(-50%);
+    background: #ffffff22; border: none; color: #fff; cursor: pointer;
+    width: 40px; height: 40px; border-radius: 50%;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .lb-nav:hover { background: #ffffff44; }
+  .lb-nav.prev { left: 12px; }
+  .lb-nav.next { right: 12px; }
+  .lb-nav svg { width: 20px; height: 20px; }
+  .lb-bottombar {
+    height: 64px; display: flex; align-items: center; justify-content: center;
+    gap: 16px; background: linear-gradient(to top, #000000bb, transparent);
+    position: absolute; bottom: 0; left: 0; right: 0;
+  }
+  .lb-action-btn {
+    width: 40px; height: 40px; border-radius: 50%;
+    background: #ffffff22; border: none; color: #fff; cursor: pointer;
+    display: flex; align-items: center; justify-content: center;
+    transition: background .15s;
+  }
+  .lb-action-btn:hover { background: var(--accent); }
+  .lb-action-btn svg { width: 18px; height: 18px; }
+  .lb-counter {
+    font-size: 13px; color: #ffffffaa; font-weight: 500;
+  }
+
+  /* ── EMPTY STATE ── */
+  .empty {
+    text-align: center; padding: 60px 20px; color: var(--muted);
+  }
+  .empty svg { width: 48px; height: 48px; margin: 0 auto 16px; opacity: .4; display: block; }
+  .empty h3 { font-size: 16px; font-weight: 600; color: var(--text); margin-bottom: 6px; }
+  .empty p { font-size: 13px; }
+
+  /* ── TOAST ── */
+  #toast {
+    position: fixed; bottom: 90px; left: 50%; transform: translateX(-50%);
+    background: var(--surface); border: 1px solid var(--border);
+    padding: 10px 20px; border-radius: 99px; font-size: 13px; font-weight: 500;
+    z-index: 999; pointer-events: none; opacity: 0; transition: opacity .3s;
+    white-space: nowrap; box-shadow: 0 4px 20px #00000055;
+  }
+  #toast.show { opacity: 1; }
+
+  /* ── LOADING ── */
+  .spinner {
+    width: 20px; height: 20px; border: 2px solid var(--border);
+    border-top-color: var(--accent); border-radius: 50%;
+    animation: spin .7s linear infinite; flex-shrink: 0;
+  }
+  .page-loader {
+    display: flex; align-items: center; justify-content: center;
+    padding: 60px; gap: 12px; color: var(--muted); font-size: 14px;
+  }
+  .page-loader .spinner { width: 24px; height: 24px; }
+
+  /* ── UPLOAD PROGRESS ── */
+  .upload-panel {
+    position: fixed; bottom: 20px; left: 16px; right: 76px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 16px; z-index: 200;
+    box-shadow: 0 8px 32px #00000088; display: none;
+  }
+  .upload-panel.show { display: block; animation: fadeUp .2s ease; }
+  .upload-panel-title { font-size: 13px; font-weight: 600; margin-bottom: 10px; display: flex; align-items: center; gap: 8px; }
+  .progress-bar-wrap { background: var(--surface2); border-radius: 99px; height: 4px; overflow: hidden; }
+  .progress-bar { background: var(--accent); height: 100%; border-radius: 99px; transition: width .3s; width: 0%; }
+  .upload-status { font-size: 12px; color: var(--muted); margin-top: 6px; }
+
+  /* ── BOTTOM NAV ── */
+  .bottom-nav {
+    position: fixed; bottom: 0; left: 0; right: 0; z-index: 100;
+    background: #0f0f10ee; backdrop-filter: blur(12px);
+    border-top: 1px solid var(--border);
+    height: 60px; display: flex; align-items: center;
+  }
+  .nav-item {
+    flex: 1; display: flex; flex-direction: column; align-items: center;
+    justify-content: center; gap: 3px; cursor: pointer;
+    color: var(--muted); transition: color .15s; font-size: 10px; font-weight: 600;
+  }
+  .nav-item.active { color: var(--accent); }
+  .nav-item svg { width: 22px; height: 22px; }
+
+  /* ANIMATIONS */
+  @keyframes fadein { from { opacity: 0 } to { opacity: 1 } }
+  @keyframes fadeUp { from { opacity: 0; transform: translateY(12px) } to { opacity: 1; transform: translateY(0) } }
+  @keyframes spin { to { transform: rotate(360deg) } }
+
+  /* ── INPUT STYLE ── */
+  .input-field {
+    width: 100%; padding: 11px 14px;
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); color: var(--text); font-family: var(--font); font-size: 14px;
+    outline: none; transition: border-color .2s;
+  }
+  .input-field:focus { border-color: var(--accent); }
+
+  .section-label {
+    padding: 8px 16px 4px;
+    font-size: 11px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .8px;
+  }
+
+  /* ── STATS DASHBOARD ── */
+  .dashboard {
+    padding: 12px 16px 0;
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 10px;
+  }
+  @media(min-width:480px){ .dashboard { grid-template-columns: repeat(4,1fr); } }
+  .stat-card {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 14px 14px 12px;
+    display: flex; flex-direction: column; gap: 4px;
+  }
+  .stat-card .stat-icon { font-size: 18px; margin-bottom: 2px; }
+  .stat-card .stat-val { font-size: 22px; font-weight: 700; line-height: 1; }
+  .stat-card .stat-lbl { font-size: 11px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .4px; }
+
+  /* ── STORAGE BAR ── */
+  .storage-bar-wrap {
+    margin: 10px 16px 4px;
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+  }
+  .storage-bar-header { display: flex; justify-content: space-between; align-items: center; margin-bottom: 8px; }
+  .storage-bar-title { font-size: 12px; font-weight: 700; color: var(--muted); text-transform: uppercase; letter-spacing: .5px; }
+  .storage-bar-pct { font-size: 12px; font-weight: 700; color: var(--accent); }
+  .storage-track { background: var(--surface2); border-radius: 99px; height: 6px; overflow: hidden; }
+  .storage-fill { background: var(--accent); height: 100%; border-radius: 99px; transition: width .5s ease; }
+  .storage-detail { font-size: 11px; color: var(--muted); margin-top: 6px; }
+
+  /* ── UPLOAD HISTORY ── */
+  .history-list { padding: 8px 16px 100px; display: flex; flex-direction: column; gap: 8px; }
+  .history-item {
+    background: var(--surface); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 12px 14px;
+    display: flex; align-items: center; gap: 10px;
+  }
+  .history-icon { font-size: 20px; flex-shrink: 0; }
+  .history-name { font-size: 13px; font-weight: 600; flex: 1; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+  .history-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .history-time { font-size: 11px; color: var(--muted); white-space: nowrap; flex-shrink: 0; }
+
+  /* ── RENAME MODAL ── */
+  #renameModal .modal { max-width: 360px; }
+
+  /* ── MOVE MODAL ── */
+  #moveModal .modal { max-width: 420px; }
+  .folder-pick-list { display: flex; flex-direction: column; gap: 6px; max-height: 260px; overflow-y: auto; margin-top: 12px; }
+  .folder-pick-item {
+    display: flex; align-items: center; gap: 10px;
+    padding: 10px 12px; border-radius: 10px;
+    background: var(--surface2); border: 1px solid var(--border);
+    cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: border-color .15s;
+  }
+  .folder-pick-item:hover, .folder-pick-item.picked { border-color: var(--accent); color: var(--accent); }
+  .folder-pick-item svg { width: 18px; height: 18px; color: var(--accent); flex-shrink: 0; }
+
+  /* ── SHARE LINK MODAL ── */
+  #shareModal .modal { max-width: 400px; }
+  .share-url-box {
+    background: var(--surface2); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 10px 14px;
+    font-size: 12px; color: var(--muted);
+    word-break: break-all; line-height: 1.5; margin-top: 12px;
+    cursor: pointer; transition: border-color .2s;
+  }
+  .share-url-box:hover { border-color: var(--accent); }
+  .share-expiry-chips { display: flex; gap: 8px; margin-top: 12px; }
+  .expiry-chip {
+    flex: 1; padding: 8px; text-align: center;
+    border: 1px solid var(--border); border-radius: 99px;
+    font-size: 12px; font-weight: 600; cursor: pointer;
+    background: var(--surface2); color: var(--muted);
+    transition: all .15s;
+  }
+  .expiry-chip.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+  /* ── THEME PICKER ── */
+  .theme-picker-wrap {
+    padding: 16px;
+  }
+  .theme-picker-title {
+    font-size: 12px; font-weight: 700; color: var(--muted);
+    text-transform: uppercase; letter-spacing: .5px; margin-bottom: 12px;
+  }
+  .theme-grid {
+    display: grid; grid-template-columns: repeat(3, 1fr); gap: 8px;
+  }
+  .theme-swatch {
+    border-radius: 10px; overflow: hidden; cursor: pointer;
+    border: 2px solid transparent; transition: border-color .15s;
+    aspect-ratio: 3/2;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 11px; font-weight: 700; gap: 4px; flex-direction: column;
+    padding: 8px;
+  }
+  .theme-swatch.active { border-color: var(--accent); }
+  .theme-swatch .swatch-dot { width: 16px; height: 16px; border-radius: 50%; flex-shrink: 0; }
+  .theme-swatch .swatch-name { font-size: 10px; font-weight: 700; }
+
+  /* add ZIP btn to bulk bar */
+  .bulk-btn.zip-btn { color: #7ec8ff; }
+
+</style>
+</head>
+<body>
+
+<!-- LOGIN -->
+<div id="loginScreen">
+  <div class="login-box">
+    <div class="logo-badge"><svg width="44" height="44" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="22" width="24" height="17" rx="5" fill="#FF6154"/><path d="M15 22v-5a7 7 0 0 1 14 0v5" stroke="#FF6154" stroke-width="2.5" stroke-linecap="round"/><text x="22" y="34" dominant-baseline="middle" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="10" fill="white">Z</text></svg></div>
+    <h1>ZPv Hub</h1>
+    <p>Your private media vault</p>
+    <div class="field">
+      <label>Admin ID</label>
+      <input type="text" id="loginEmail" placeholder="Enter your ID" autocomplete="username"/>
+    </div>
+    <div class="field">
+      <label>Password</label>
+      <input type="password" id="loginPass" placeholder="••••••••" autocomplete="current-password"/>
+    </div>
+    <button class="btn-primary" id="loginBtn" onclick="doLogin()">Sign In</button>
+    <div class="err-msg" id="loginErr"></div>
+  </div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <!-- TOPBAR -->
+  <div class="topbar">
+    <div class="topbar-logo"><svg width="22" height="22" viewBox="0 0 44 44" fill="none" xmlns="http://www.w3.org/2000/svg"><rect x="10" y="22" width="24" height="17" rx="5" fill="#FF6154"/><path d="M15 22v-5a7 7 0 0 1 14 0v5" stroke="#FF6154" stroke-width="2.5" stroke-linecap="round"/><text x="22" y="34" dominant-baseline="middle" text-anchor="middle" font-family="Georgia,serif" font-weight="700" font-size="10" fill="white">Z</text></svg></div>
+    <div class="topbar-title">ZPv <span>Hub</span></div>
+    <div class="icon-btn" onclick="setTab('stats')" title="Stats">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 13.125C3 12.504 3.504 12 4.125 12h2.25c.621 0 1.125.504 1.125 1.125v6.75C7.5 20.496 6.996 21 6.375 21h-2.25A1.125 1.125 0 0 1 3 19.875v-6.75ZM9.75 8.625c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125v11.25c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V8.625ZM16.5 4.125c0-.621.504-1.125 1.125-1.125h2.25C20.496 3 21 3.504 21 4.125v15.75c0 .621-.504 1.125-1.125 1.125h-2.25a1.125 1.125 0 0 1-1.125-1.125V4.125Z"/></svg>
+    </div>
+    <div class="icon-btn" onclick="toggleSelectMode()" id="selectToggleBtn" title="Select">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9 12.75 11.25 15 15 9.75M21 12a9 9 0 1 1-18 0 9 9 0 0 1 18 0Z"/></svg>
+    </div>
+    <div class="icon-btn" onclick="doLogout()" title="Logout">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M8.25 9V5.25A2.25 2.25 0 0 1 10.5 3h6a2.25 2.25 0 0 1 2.25 2.25v13.5A2.25 2.25 0 0 1 16.5 21h-6a2.25 2.25 0 0 1-2.25-2.25V15m-3 0-3-3m0 0 3-3m-3 3H15"/></svg>
+    </div>
+  </div>
+
+  <!-- BREADCRUMB -->
+  <div class="breadcrumb" id="breadcrumb"></div>
+
+  <!-- TOOLBAR -->
+  <div class="toolbar">
+    <div class="toolbar-left">
+      <div class="chip active" id="filterAll" onclick="setFilter('all')">All</div>
+      <div class="chip" id="filterImages" onclick="setFilter('image')">
+        <svg style="display:inline;width:13px;height:13px;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+        Photos
+      </div>
+      <div class="chip" id="filterVideos" onclick="setFilter('video')">
+        <svg style="display:inline;width:13px;height:13px;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m15.75 10.5 4.72-4.72a.75.75 0 0 1 1.28.53v11.38a.75.75 0 0 1-1.28.53l-4.72-4.72M4.5 18.75h9a2.25 2.25 0 0 0 2.25-2.25v-9a2.25 2.25 0 0 0-2.25-2.25h-9A2.25 2.25 0 0 0 2.25 7.5v9a2.25 2.25 0 0 0 2.25 2.25Z"/></svg>
+        Videos
+      </div>
+      <div class="chip" id="filterFavs" onclick="setFilter('fav')">
+        <svg style="display:inline;width:13px;height:13px;vertical-align:-2px;margin-right:4px" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd"/></svg>
+        Favs
+      </div>
+    </div>
+    <div class="toolbar-right">
+      <div class="select-info" id="selectInfo" style="display:none"></div>
+    </div>
+  </div>
+
+  <!-- MAIN CONTENT -->
+  <div id="mainContent"></div>
+
+  <!-- BOTTOM NAV -->
+  <div class="bottom-nav">
+    <div class="nav-item active" onclick="setTab('home')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 12 8.954-8.955c.44-.439 1.152-.439 1.591 0L21.75 12M4.5 9.75v10.125c0 .621.504 1.125 1.125 1.125H9.75v-4.875c0-.621.504-1.125 1.125-1.125h2.25c.621 0 1.125.504 1.125 1.125V21h4.125c.621 0 1.125-.504 1.125-1.125V9.75M8.25 21h8.25"/></svg>
+      Home
+    </div>
+    <div class="nav-item" onclick="setTab('folders')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25v-9A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 0-1.061.44Z"/></svg>
+      Folders
+    </div>
+    <div class="nav-item" onclick="setTab('favs')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M11.48 3.499a.562.562 0 0 1 1.04 0l2.125 5.111a.563.563 0 0 0 .475.345l5.518.442c.499.04.701.663.321.988l-4.204 3.602a.563.563 0 0 0-.182.557l1.285 5.385a.562.562 0 0 1-.84.61l-4.725-2.885a.562.562 0 0 0-.586 0L6.982 20.54a.562.562 0 0 1-.84-.61l1.285-5.386a.562.562 0 0 0-.182-.557l-4.204-3.602a.562.562 0 0 1 .321-.988l5.518-.442a.563.563 0 0 0 .475-.345L11.48 3.5Z"/></svg>
+      Favorites
+    </div>
+    <div class="nav-item" onclick="setTab('search')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m21 21-5.197-5.197m0 0A7.5 7.5 0 1 0 5.196 5.196a7.5 7.5 0 0 0 10.607 10.607Z"/></svg>
+      Search
+    </div>
+    <div class="nav-item" onclick="setTab('settings')">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M9.594 3.94c.09-.542.56-.94 1.11-.94h2.593c.55 0 1.02.398 1.11.94l.213 1.281c.063.374.313.686.645.87.074.04.147.083.22.127.325.196.72.257 1.075.124l1.217-.456a1.125 1.125 0 0 1 1.37.49l1.296 2.247a1.125 1.125 0 0 1-.26 1.431l-1.003.827c-.293.241-.438.613-.43.992a7.723 7.723 0 0 1 0 .255c-.008.378.137.75.43.991l1.004.827c.424.35.534.955.26 1.43l-1.298 2.247a1.125 1.125 0 0 1-1.369.491l-1.217-.456c-.355-.133-.75-.072-1.076.124a6.47 6.47 0 0 1-.22.128c-.331.183-.581.495-.644.869l-.213 1.281c-.09.543-.56.94-1.11.94h-2.594c-.55 0-1.019-.398-1.11-.94l-.213-1.281c-.062-.374-.312-.686-.644-.87a6.52 6.52 0 0 1-.22-.127c-.325-.196-.72-.257-1.076-.124l-1.217.456a1.125 1.125 0 0 1-1.369-.49l-1.297-2.247a1.125 1.125 0 0 1 .26-1.431l1.004-.827c.292-.24.437-.613.43-.991a6.932 6.932 0 0 1 0-.255c.007-.38-.138-.751-.43-.992l-1.004-.827a1.125 1.125 0 0 1-.26-1.43l1.297-2.247a1.125 1.125 0 0 1 1.37-.491l1.216.456c.356.133.751.072 1.076-.124.072-.044.146-.086.22-.128.332-.183.582-.495.644-.869l.214-1.28Z"/><path stroke-linecap="round" stroke-linejoin="round" d="M15 12a3 3 0 1 1-6 0 3 3 0 0 1 6 0Z"/></svg>
+      Settings
+    </div>
+  </div>
+
+  <!-- FAB -->
+  <button class="fab" id="fab" onclick="toggleFabMenu()">
+    <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>
+  </button>
+  <div class="fab-menu" id="fabMenu">
+    <div class="fab-menu-item" onclick="triggerUpload()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5m-13.5-9L12 3m0 0 4.5 4.5M12 3v13.5"/></svg>
+      Upload Media
+    </div>
+    <div class="fab-menu-item" onclick="showNewFolderModal()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 10.5v6m3-3H9m4.06-7.19-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v12a2.25 2.25 0 0 0 2.25 2.25h15A2.25 2.25 0 0 0 21.75 18V9a2.25 2.25 0 0 0-2.25-2.25h-5.379a1.5 1.5 0 0 1-1.06-.44Z"/></svg>
+      New Folder
+    </div>
+  </div>
+
+  <!-- BULK ACTION BAR -->
+  <div class="bulk-bar" id="bulkBar">
+    <span id="bulkCount" style="font-size:13px;font-weight:700;color:var(--accent)"></span>
+    <button class="bulk-btn" onclick="bulkFavorite()">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd"/></svg>
+      Favorite
+    </button>
+    <button class="bulk-btn" onclick="bulkDownload()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+      Download
+    </button>
+    <button class="bulk-btn zip-btn" onclick="bulkDownloadZip()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M20.25 7.5l-.625 10.632a2.25 2.25 0 01-2.247 2.118H6.622a2.25 2.25 0 01-2.247-2.118L3.75 7.5M10 11.25h4M3.375 7.5h17.25c.621 0 1.125-.504 1.125-1.125v-1.5c0-.621-.504-1.125-1.125-1.125H3.375c-.621 0-1.125.504-1.125 1.125v1.5c0 .621.504 1.125 1.125 1.125z"/></svg>
+      ZIP
+    </button>
+    <button class="bulk-btn" onclick="bulkMoveToFolder()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 014.5 9.75h15A2.25 2.25 0 0121.75 12v.75m-8.69-6.44l-2.12-2.12a1.5 1.5 0 00-1.061-.44H4.5A2.25 2.25 0 002.25 6v8.25A2.25 2.25 0 004.5 16.5h15a2.25 2.25 0 002.25-2.25v-9A2.25 2.25 0 0019.5 6h-5.69a1.5 1.5 0 01-1.061-.44z"/></svg>
+      Move
+    </button>
+    <button class="bulk-btn danger" onclick="bulkDelete()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+      Delete
+    </button>
+    <button class="bulk-btn" onclick="clearSelection()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- LIGHTBOX -->
+<div id="lightbox">
+  <div class="lb-topbar">
+    <div class="lb-title" id="lbTitle"></div>
+    <button class="lb-close" onclick="closeLightbox()">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor" style="width:18px;height:18px"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>
+    </button>
+  </div>
+  <div class="lb-body">
+    <img id="lbImg" alt=""/>
+    <video id="lbVideo" controls playsinline></video>
+    <button class="lb-nav prev" id="lbPrev" onclick="lbNav(-1)">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M15.75 19.5 8.25 12l7.5-7.5"/></svg>
+    </button>
+    <button class="lb-nav next" id="lbNext" onclick="lbNav(1)">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m8.25 4.5 7.5 7.5-7.5 7.5"/></svg>
+    </button>
+  </div>
+  <div class="lb-bottombar">
+    <button class="lb-action-btn" onclick="lbFavorite()" id="lbFavBtn" title="Favorite">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd"/></svg>
+    </button>
+    <span class="lb-counter" id="lbCounter"></span>
+    <button class="lb-action-btn" onclick="lbDownload()" title="Download">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+    </button>
+  </div>
+</div>
+
+<!-- NEW FOLDER MODAL -->
+<div class="modal-overlay" id="folderModal">
+  <div class="modal">
+    <h2>New Folder</h2>
+    <input type="text" id="folderNameInput" class="input-field" placeholder="Folder name..." maxlength="50"/>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('folderModal')">Cancel</button>
+      <button class="btn-primary" style="width:auto;padding:9px 20px" onclick="createFolder()">Create</button>
+    </div>
+  </div>
+</div>
+
+<!-- DELETE CONFIRM MODAL -->
+<div class="modal-overlay" id="deleteModal">
+  <div class="modal">
+    <h2>Delete Files?</h2>
+    <p style="color:var(--muted);font-size:14px">This will permanently delete the selected files. This can't be undone.</p>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('deleteModal')">Cancel</button>
+      <button class="btn-danger" onclick="confirmDelete()">Delete</button>
+    </div>
+  </div>
+</div>
+
+<!-- HIDDEN FILE INPUT -->
+<input type="file" id="fileInput" multiple accept="image/*,video/*" style="display:none" onchange="handleFiles(this.files)"/>
+
+<!-- UPLOAD PROGRESS PANEL -->
+<div class="upload-panel" id="uploadPanel">
+  <div class="upload-panel-title">
+    <div class="spinner"></div>
+    <span id="uploadPanelTitle">Uploading...</span>
+  </div>
+  <div class="progress-bar-wrap"><div class="progress-bar" id="progressBar"></div></div>
+  <div class="upload-status" id="uploadStatus"></div>
+</div>
+
+<!-- TOAST -->
+<div id="toast"></div>
+
+<!-- RENAME MODAL -->
+<div class="modal-overlay" id="renameModal">
+  <div class="modal">
+    <h2>Rename File</h2>
+    <input type="text" id="renameInput" class="input-field" placeholder="New file name..." maxlength="200"/>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('renameModal')">Cancel</button>
+      <button class="btn-primary" style="width:auto;padding:9px 20px" onclick="confirmRename()">Rename</button>
+    </div>
+  </div>
+</div>
+
+<!-- SHARE MODAL -->
+<div class="modal-overlay" id="shareModal">
+  <div class="modal">
+    <h2>Share Link</h2>
+    <p style="color:var(--muted);font-size:13px">Generate a temporary signed link for this file.</p>
+    <div class="share-expiry-chips">
+      <div class="expiry-chip active" data-hours="1" onclick="selectExpiry(1)">1 Hour</div>
+      <div class="expiry-chip" data-hours="24" onclick="selectExpiry(24)">24 Hours</div>
+      <div class="expiry-chip" data-hours="168" onclick="selectExpiry(168)">7 Days</div>
+    </div>
+    <div id="shareUrlBox" class="share-url-box" onclick="copyShareUrl()" style="display:none">Tap to copy...</div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('shareModal')">Close</button>
+      <button class="btn-primary" id="genLinkBtn" style="width:auto;padding:9px 20px" onclick="generateShareLink()">Generate</button>
+    </div>
+  </div>
+</div>
+
+<!-- MOVE TO FOLDER MODAL -->
+<div class="modal-overlay" id="moveModal">
+  <div class="modal">
+    <h2>Move to Folder</h2>
+    <p style="color:var(--muted);font-size:13px">Select destination folder for <span id="movingCount" style="color:var(--text);font-weight:600"></span> file(s).</p>
+    <div class="folder-pick-list" id="folderPickList"></div>
+    <div class="modal-actions">
+      <button class="btn-ghost" onclick="closeModal('moveModal')">Cancel</button>
+      <button class="btn-primary" id="confirmMoveBtn" style="width:auto;padding:9px 20px;opacity:.5" onclick="confirmMove()" disabled>Move Here</button>
+    </div>
+  </div>
+</div>
+
+<script>
+const SUPABASE_URL = 'https://orangmimrotvfzosyzfp.supabase.co';
+const SUPABASE_KEY = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6Im9yYW5nbWltcm90dmZ6b3N5emZwIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NzQzNDk1MzAsImV4cCI6MjA4OTkyNTUzMH0.Z2ou9Lc4eoNeViv77YK3aO1AgxT1KZVyuYe_w4bvzLY';
+const ADMIN_EMAIL = 'zade4@zpvhub.com';
+const ADMIN_PASS = 'zade4ever';
+
+const sb = supabase.createClient(SUPABASE_URL, SUPABASE_KEY);
+
+// ── STATE ──
+let currentFolderId = null;
+let folderStack = []; // [{id, name}]
+let mediaItems = [];
+let filteredItems = [];
+let currentFilter = 'all';
+let selectedIds = new Set();
+let selectMode = false;
+let lbIndex = 0;
+let lbItems = [];
+let currentTab = 'home';
+let fabOpen = false;
+let swipeStartX = 0;
+let pendingDeleteIds = [];
+
+// ── AUTH ──
+async function doLogin() {
+  const emailInput = document.getElementById('loginEmail').value.trim();
+  const pass = document.getElementById('loginPass').value;
+  const btn = document.getElementById('loginBtn');
+  const err = document.getElementById('loginErr');
+  err.textContent = '';
+  btn.disabled = true; btn.textContent = 'Signing in...';
+  
+  // Accept ID "zade4" or full email
+  const email = emailInput === 'zade4' ? ADMIN_EMAIL : emailInput;
+  
+  const { error } = await sb.auth.signInWithPassword({ email, password: pass });
+  btn.disabled = false; btn.textContent = 'Sign In';
+  if (error) { err.textContent = 'Invalid credentials. Try again.'; return; }
+  showApp();
+}
+
+document.getElementById('loginPass').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+document.getElementById('loginEmail').addEventListener('keydown', e => { if(e.key==='Enter') doLogin(); });
+
+async function doLogout() {
+  await sb.auth.signOut();
+  document.getElementById('app').style.display = 'none';
+  document.getElementById('loginScreen').style.display = 'flex';
+}
+
+async function checkSession() {
+  const { data } = await sb.auth.getSession();
+  if (data.session) showApp();
+}
+
+function showApp() {
+  document.getElementById('loginScreen').style.display = 'none';
+  document.getElementById('app').style.display = 'flex';
+  loadContent();
+}
+
+// ── TABS ──
+function setTab(tab) {
+  currentTab = tab;
+  document.querySelectorAll('.nav-item').forEach((el,i) => {
+    el.classList.toggle('active', ['home','folders','favs','search','settings'][i] === tab);
+  });
+  currentFolderId = null; folderStack = [];
+  if(tab === 'favs') { currentFilter = 'fav'; updateFilterChips(); }
+  else if(currentFilter === 'fav' && tab !== 'favs') { currentFilter = 'all'; updateFilterChips(); }
+  loadContent();
+}
+
+// ── FILTER ──
+function setFilter(f) {
+  currentFilter = f;
+  updateFilterChips();
+  renderMedia();
+}
+function updateFilterChips() {
+  document.getElementById('filterAll').classList.toggle('active', currentFilter==='all');
+  document.getElementById('filterImages').classList.toggle('active', currentFilter==='image');
+  document.getElementById('filterVideos').classList.toggle('active', currentFilter==='video');
+  document.getElementById('filterFavs').classList.toggle('active', currentFilter==='fav');
+}
+
+// ── LOAD CONTENT ──
+async function loadContent() {
+  clearSelection();
+  const content = document.getElementById('mainContent');
+  content.innerHTML = `<div class="page-loader"><div class="spinner"></div> Loading...</div>`;
+  updateBreadcrumb();
+  
+  if (currentTab === 'search') { renderSearch(); return; }
+  if (currentTab === 'settings') { renderSettings(); return; }
+  if (currentTab === 'stats') { await renderDashboard(); return; }
+  if (currentTab === 'folders' && currentFolderId === null) { await loadFolders(); return; }
+  await loadMedia();
+}
+
+// ── BREADCRUMB ──
+function updateBreadcrumb() {
+  const bc = document.getElementById('breadcrumb');
+  let html = `<span class="bc-item ${folderStack.length===0?'active':''}" onclick="goHome()">Home</span>`;
+  folderStack.forEach((f,i) => {
+    html += `<span class="bc-sep">›</span>`;
+    html += `<span class="bc-item ${i===folderStack.length-1?'active':''}" onclick="goBreadcrumb(${i})">${f.name}</span>`;
+  });
+  bc.innerHTML = html;
+}
+
+function goHome() {
+  currentFolderId = null; folderStack = [];
+  loadContent();
+}
+function goBreadcrumb(idx) {
+  folderStack = folderStack.slice(0, idx+1);
+  currentFolderId = folderStack[idx].id;
+  loadContent();
+}
+
+// ── FOLDERS ──
+async function loadFolders() {
+  let q = sb.from('folders').select('*').order('created_at');
+  if(currentFolderId) q = q.eq('parent_id', currentFolderId);
+  else q = q.is('parent_id', null);
+  const { data } = await q;
+  const { data: media } = await sb.from('media').select('folder_id');
+  
+  const counts = {};
+  (media||[]).forEach(m => { if(m.folder_id) counts[m.folder_id] = (counts[m.folder_id]||0)+1; });
+  
+  const content = document.getElementById('mainContent');
+  if(!data || data.length === 0) {
+    content.innerHTML = `<div class="empty">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M2.25 12.75V12A2.25 2.25 0 0 1 4.5 9.75h15A2.25 2.25 0 0 1 21.75 12v.75m-8.69-6.44-2.12-2.12a1.5 1.5 0 0 0-1.061-.44H4.5A2.25 2.25 0 0 0 2.25 6v8.25A2.25 2.25 0 0 0 4.5 16.5h15a2.25 2.25 0 0 0 2.25-2.25v-9A2.25 2.25 0 0 0 19.5 6h-5.69a1.5 1.5 0 0 0-1.061.44Z"/></svg>
+      <h3>No folders yet</h3><p>Tap + to create your first folder</p>
+    </div>`;
+    return;
+  }
+  
+  let html = `<div class="folders-grid">`;
+  data.forEach(f => {
+    html += `<div class="folder-card" onclick="openFolder('${f.id}','${escHtml(f.name)}')">
+      <div class="folder-icon"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 21a3 3 0 0 0 3-3v-4.5a3 3 0 0 0-3-3h-15a3 3 0 0 0-3 3V18a3 3 0 0 0 3 3h15ZM1.5 10.146V6a3 3 0 0 1 3-3h5.379a2.25 2.25 0 0 1 1.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 0 1 3 3v1.146A4.483 4.483 0 0 0 19.5 9h-15a4.483 4.483 0 0 0-3 1.146Z"/></svg></div>
+      <div>
+        <div class="folder-name">${escHtml(f.name)}</div>
+        <div class="folder-meta">${counts[f.id]||0} items</div>
+      </div>
+      <div class="folder-del" onclick="event.stopPropagation();deleteFolder('${f.id}')">
+        <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  content.innerHTML = html;
+}
+
+function openFolder(id, name) {
+  currentFolderId = id;
+  folderStack.push({id, name});
+  currentTab = 'home';
+  loadContent();
+}
+
+async function deleteFolder(id) {
+  if(!confirm('Delete this folder and all its contents?')) return;
+  await sb.from('media').delete().eq('folder_id', id);
+  await sb.from('folders').delete().eq('id', id);
+  showToast('Folder deleted');
+  loadFolders();
+}
+
+// ── MEDIA ──
+async function loadMedia() {
+  let q = sb.from('media').select('*').order('created_at', {ascending: false});
+  if(currentFolderId) q = q.eq('folder_id', currentFolderId);
+  else if(currentTab === 'home') q = q.is('folder_id', null);
+  
+  const { data } = await q;
+  mediaItems = data || [];
+  renderMedia();
+}
+
+function renderMedia() {
+  let items = [...mediaItems];
+  if(currentFilter === 'image') items = items.filter(i => i.type === 'image');
+  else if(currentFilter === 'video') items = items.filter(i => i.type === 'video');
+  else if(currentFilter === 'fav') items = items.filter(i => i.is_favorite);
+  filteredItems = items;
+  
+  const content = document.getElementById('mainContent');
+  if(items.length === 0) {
+    content.innerHTML = `<div class="empty">
+      <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.5" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m2.25 15.75 5.159-5.159a2.25 2.25 0 0 1 3.182 0l5.159 5.159m-1.5-1.5 1.409-1.409a2.25 2.25 0 0 1 3.182 0l2.909 2.909m-18 3.75h16.5a1.5 1.5 0 0 0 1.5-1.5V6a1.5 1.5 0 0 0-1.5-1.5H3.75A1.5 1.5 0 0 0 2.25 6v12a1.5 1.5 0 0 0 1.5 1.5Zm10.5-11.25h.008v.008h-.008V8.25Zm.375 0a.375.375 0 1 1-.75 0 .375.375 0 0 1 .75 0Z"/></svg>
+      <h3>No media here</h3><p>Tap + to upload photos & videos</p>
+    </div>`;
+    return;
+  }
+  
+  let html = `<div class="media-grid">`;
+  items.forEach((item, idx) => {
+    const sel = selectedIds.has(item.id);
+    const isVid = item.type === 'video';
+    html += `<div class="media-card ${sel?'selected':''}" data-id="${item.id}" data-idx="${idx}" onclick="cardClick('${item.id}',${idx})">
+      <img src="" alt="${escHtml(item.file_name)}" loading="lazy" data-path="${item.storage_path}" style="display:${isVid?'none':'block'}"/>
+      ${isVid ? `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#111">
+        <svg style="width:40px;height:40px;color:#ffffff55" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm14.024-.983a1.125 1.125 0 0 1 0 1.966l-5.603 3.113A1.125 1.125 0 0 1 9 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113Z" clip-rule="evenodd"/></svg>
+      </div>` : ''}
+      <div class="card-overlay"></div>
+      <div class="card-check">
+        <svg style="width:12px;height:12px;display:${sel?'block':'none'}" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="white"><path fill-rule="evenodd" d="M19.916 4.626a.75.75 0 0 1 .208 1.04l-9 13.5a.75.75 0 0 1-1.154.114l-6-6a.75.75 0 0 1 1.06-1.06l5.353 5.353 8.493-12.739a.75.75 0 0 1 1.04-.208Z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="card-fav ${item.is_favorite?'active':''}" onclick="event.stopPropagation();toggleFav('${item.id}',${!item.is_favorite})">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd"/></svg>
+      </div>
+      <div class="card-type-badge">${isVid ? 'VIDEO' : 'IMG'}</div>
+      <div class="card-actions">
+        <div class="card-action-btn" onclick="event.stopPropagation();downloadItem('${item.id}')" title="Download">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M3 16.5v2.25A2.25 2.25 0 0 0 5.25 21h13.5A2.25 2.25 0 0 0 21 18.75V16.5M16.5 12 12 16.5m0 0L7.5 12m4.5 4.5V3"/></svg>
+        </div>
+        <div class="card-action-btn" onclick="event.stopPropagation();showRenameModal('${item.id}','${escHtml(item.file_name).replace(/'/g,"\\'")}');" title="Rename">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m16.862 4.487 1.687-1.688a1.875 1.875 0 1 1 2.652 2.652L6.832 19.82a4.5 4.5 0 0 1-1.897 1.13l-2.685.8.8-2.685a4.5 4.5 0 0 1 1.13-1.897L16.863 4.487Zm0 0L19.5 7.125"/></svg>
+        </div>
+        <div class="card-action-btn" onclick="event.stopPropagation();showShareModal('${item.id}')" title="Share Link">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M13.19 8.688a4.5 4.5 0 0 1 1.242 7.244l-4.5 4.5a4.5 4.5 0 0 1-6.364-6.364l1.757-1.757m13.35-.622 1.757-1.757a4.5 4.5 0 0 0-6.364-6.364l-4.5 4.5a4.5 4.5 0 0 0 1.242 7.244"/></svg>
+        </div>
+        <div class="card-action-btn" onclick="event.stopPropagation();deleteSingle('${item.id}')" title="Delete">
+          <svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="1.8" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="m14.74 9-.346 9m-4.788 0L9.26 9m9.968-3.21c.342.052.682.107 1.022.166m-1.022-.165L18.16 19.673a2.25 2.25 0 0 1-2.244 2.077H8.084a2.25 2.25 0 0 1-2.244-2.077L4.772 5.79m14.456 0a48.108 48.108 0 0 0-3.478-.397m-12 .562c.34-.059.68-.114 1.022-.165m0 0a48.11 48.11 0 0 1 3.478-.397m7.5 0v-.916c0-1.18-.91-2.164-2.09-2.201a51.964 51.964 0 0 0-3.32 0c-1.18.037-2.09 1.022-2.09 2.201v.916m7.5 0a48.667 48.667 0 0 0-7.5 0"/></svg>
+        </div>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  content.innerHTML = html;
+  
+  // Lazy load signed URLs for images
+  items.forEach((item) => {
+    if(item.type === 'image') {
+      getSignedUrl(item.storage_path).then(url => {
+        if(!url) return;
+        const el = content.querySelector(`[data-id="${item.id}"] img`);
+        if(el) el.src = url;
+      });
+    }
+  });
+}
+
+// ── SIGNED URL ──
+const urlCache = {};
+async function getSignedUrl(path) {
+  if(urlCache[path]) return urlCache[path];
+  const { data } = await sb.storage.from('media').createSignedUrl(path, 3600);
+  if(data?.signedUrl) { urlCache[path] = data.signedUrl; return data.signedUrl; }
+  return null;
+}
+
+// ── CARD CLICK ──
+function cardClick(id, idx) {
+  if(selectMode) { toggleSelect(id); return; }
+  openLightbox(idx);
+}
+
+// ── SELECT MODE ──
+function toggleSelectMode() {
+  selectMode = !selectMode;
+  clearSelection();
+  document.getElementById('selectToggleBtn').style.color = selectMode ? 'var(--accent)' : '';
+  if(!selectMode) { document.getElementById('selectInfo').style.display = 'none'; }
+}
+
+function toggleSelect(id) {
+  if(selectedIds.has(id)) selectedIds.delete(id);
+  else selectedIds.add(id);
+  updateSelectionUI();
+  renderMedia();
+}
+
+function clearSelection() {
+  selectedIds.clear();
+  updateSelectionUI();
+}
+
+function updateSelectionUI() {
+  const count = selectedIds.size;
+  const info = document.getElementById('selectInfo');
+  const bulk = document.getElementById('bulkBar');
+  const cnt = document.getElementById('bulkCount');
+  if(count > 0) {
+    info.style.display = 'block'; info.textContent = `${count} selected`;
+    cnt.textContent = `${count} selected`;
+    bulk.classList.add('show');
+  } else {
+    info.style.display = 'none';
+    bulk.classList.remove('show');
+  }
+}
+
+// ── BULK ACTIONS ──
+async function bulkFavorite() {
+  const ids = [...selectedIds];
+  await sb.from('media').update({is_favorite: true}).in('id', ids);
+  showToast('Added to favorites ⭐');
+  clearSelection(); loadMedia();
+}
+
+async function bulkDownload() {
+  const ids = [...selectedIds];
+  const items = filteredItems.filter(i => ids.includes(i.id));
+  for(const item of items) await downloadItem(item.id, false);
+  showToast(`Downloaded ${items.length} files`);
+  clearSelection();
+}
+
+function bulkDelete() {
+  pendingDeleteIds = [...selectedIds];
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+async function confirmDelete() {
+  closeModal('deleteModal');
+  for(const id of pendingDeleteIds) {
+    const item = mediaItems.find(i => i.id === id);
+    if(item) {
+      await sb.storage.from('media').remove([item.storage_path]);
+      await sb.from('media').delete().eq('id', id);
+    }
+  }
+  showToast('Deleted successfully');
+  clearSelection(); loadMedia();
+}
+
+async function deleteSingle(id) {
+  pendingDeleteIds = [id];
+  document.getElementById('deleteModal').classList.add('open');
+}
+
+// ── FAVORITE ──
+async function toggleFav(id, val) {
+  await sb.from('media').update({is_favorite: val}).eq('id', id);
+  const item = mediaItems.find(i => i.id === id);
+  if(item) item.is_favorite = val;
+  showToast(val ? '⭐ Added to favorites' : 'Removed from favorites');
+  renderMedia();
+}
+
+// ── DOWNLOAD ──
+async function downloadItem(id, toast=true) {
+  const item = mediaItems.find(i => i.id === id);
+  if(!item) return;
+  const url = await getSignedUrl(item.storage_path);
+  if(!url) return;
+  const a = document.createElement('a');
+  a.href = url; a.download = item.file_name; a.target = '_blank';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  if(toast) showToast('Downloading...');
+}
+
+// ── LIGHTBOX ──
+async function openLightbox(idx) {
+  lbItems = filteredItems;
+  lbIndex = idx;
+  document.getElementById('lightbox').classList.add('open');
+  document.body.style.overflow = 'hidden';
+  await showLbItem();
+  
+  // Swipe support
+  const body = document.querySelector('.lb-body');
+  body.addEventListener('touchstart', lbTouchStart, {passive:true});
+  body.addEventListener('touchend', lbTouchEnd, {passive:true});
+}
+
+function closeLightbox() {
+  document.getElementById('lightbox').classList.remove('open');
+  document.body.style.overflow = '';
+  document.getElementById('lbVideo').pause();
+  document.getElementById('lbVideo').src = '';
+  document.getElementById('lbImg').src = '';
+  const body = document.querySelector('.lb-body');
+  body.removeEventListener('touchstart', lbTouchStart);
+  body.removeEventListener('touchend', lbTouchEnd);
+}
+
+async function showLbItem() {
+  const item = lbItems[lbIndex];
+  if(!item) return;
+  document.getElementById('lbTitle').textContent = item.file_name;
+  document.getElementById('lbCounter').textContent = `${lbIndex+1} / ${lbItems.length}`;
+  document.getElementById('lbPrev').style.display = lbIndex > 0 ? 'flex' : 'none';
+  document.getElementById('lbNext').style.display = lbIndex < lbItems.length-1 ? 'flex' : 'none';
+  document.getElementById('lbFavBtn').style.color = item.is_favorite ? '#FFD700' : '#ffffff88';
+  
+  const img = document.getElementById('lbImg');
+  const vid = document.getElementById('lbVideo');
+  vid.pause(); vid.src=''; img.src='';
+  
+  const url = await getSignedUrl(item.storage_path);
+  if(item.type === 'image') {
+    img.style.display = 'block'; vid.style.display = 'none';
+    img.src = url || '';
+  } else {
+    vid.style.display = 'block'; img.style.display = 'none';
+    vid.src = url || '';
+    vid.play().catch(()=>{});
+  }
+}
+
+function lbNav(dir) {
+  lbIndex = Math.max(0, Math.min(lbItems.length-1, lbIndex + dir));
+  showLbItem();
+}
+
+async function lbFavorite() {
+  const item = lbItems[lbIndex];
+  const newVal = !item.is_favorite;
+  await sb.from('media').update({is_favorite: newVal}).eq('id', item.id);
+  item.is_favorite = newVal;
+  document.getElementById('lbFavBtn').style.color = newVal ? '#FFD700' : '#ffffff88';
+  const mItem = mediaItems.find(i => i.id === item.id);
+  if(mItem) mItem.is_favorite = newVal;
+  showToast(newVal ? '⭐ Added to favorites' : 'Removed from favorites');
+}
+
+async function lbDownload() {
+  await downloadItem(lbItems[lbIndex].id);
+}
+
+function lbTouchStart(e) { swipeStartX = e.touches[0].clientX; }
+function lbTouchEnd(e) {
+  const dx = e.changedTouches[0].clientX - swipeStartX;
+  if(Math.abs(dx) > 50) lbNav(dx < 0 ? 1 : -1);
+}
+
+document.addEventListener('keydown', e => {
+  if(!document.getElementById('lightbox').classList.contains('open')) return;
+  if(e.key === 'ArrowLeft') lbNav(-1);
+  if(e.key === 'ArrowRight') lbNav(1);
+  if(e.key === 'Escape') closeLightbox();
+});
+
+// ── UPLOAD ──
+function triggerUpload() {
+  closeFabMenu();
+  document.getElementById('fileInput').click();
+}
+
+async function handleFiles(files) {
+  if(!files || files.length === 0) return;
+  const panel = document.getElementById('uploadPanel');
+  const bar = document.getElementById('progressBar');
+  const status = document.getElementById('uploadStatus');
+  const title = document.getElementById('uploadPanelTitle');
+  panel.classList.add('show');
+  
+  let done = 0;
+  for(const file of files) {
+    const isVid = file.type.startsWith('video/');
+    const ext = file.name.split('.').pop();
+    const safeName = `${Date.now()}_${Math.random().toString(36).slice(2)}.${ext}`;
+    const path = currentFolderId ? `${currentFolderId}/${safeName}` : `root/${safeName}`;
+    title.textContent = `Uploading ${done+1} of ${files.length}...`;
+    status.textContent = file.name;
+    
+    const { error: upErr } = await sb.storage.from('media').upload(path, file);
+    if(!upErr) {
+      await sb.from('media').insert({
+        folder_id: currentFolderId || null,
+        file_name: file.name,
+        storage_path: path,
+        type: isVid ? 'video' : 'image',
+        size: file.size
+      });
+    }
+    done++;
+    bar.style.width = `${(done/files.length)*100}%`;
+  }
+  
+  title.textContent = `Upload complete ✓`;
+  status.textContent = `${done} file(s) uploaded`;
+  setTimeout(() => { panel.classList.remove('show'); bar.style.width='0%'; }, 2500);
+  showToast(`${done} file(s) uploaded`);
+  document.getElementById('fileInput').value = '';
+  loadMedia();
+}
+
+// ── FOLDER MODAL ──
+function showNewFolderModal() {
+  closeFabMenu();
+  document.getElementById('folderNameInput').value = '';
+  document.getElementById('folderModal').classList.add('open');
+  setTimeout(() => document.getElementById('folderNameInput').focus(), 100);
+}
+document.getElementById('folderNameInput').addEventListener('keydown', e => { if(e.key==='Enter') createFolder(); });
+
+async function createFolder() {
+  const name = document.getElementById('folderNameInput').value.trim();
+  if(!name) return;
+  await sb.from('folders').insert({ name, parent_id: currentFolderId || null });
+  closeModal('folderModal');
+  showToast('Folder created');
+  if(currentTab === 'folders') loadFolders();
+}
+
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+// ── FAB MENU ──
+function toggleFabMenu() {
+  fabOpen = !fabOpen;
+  document.getElementById('fabMenu').classList.toggle('open', fabOpen);
+  document.getElementById('fab').innerHTML = fabOpen
+    ? `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M6 18 18 6M6 6l12 12"/></svg>`
+    : `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>`;
+}
+function closeFabMenu() {
+  fabOpen = false;
+  document.getElementById('fabMenu').classList.remove('open');
+  document.getElementById('fab').innerHTML = `<svg xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24" stroke-width="2" stroke="currentColor"><path stroke-linecap="round" stroke-linejoin="round" d="M12 4.5v15m7.5-7.5h-15"/></svg>`;
+}
+
+// ── SEARCH ──
+function renderSearch() {
+  document.getElementById('mainContent').innerHTML = `
+    <div style="padding:16px">
+      <input type="text" class="input-field" id="searchInput" placeholder="Search photos & videos..." oninput="doSearch(this.value)"/>
+    </div>
+    <div id="searchResults"></div>
+  `;
+  setTimeout(() => document.getElementById('searchInput').focus(), 100);
+}
+
+async function doSearch(q) {
+  if(!q) { document.getElementById('searchResults').innerHTML = ''; return; }
+  const { data } = await sb.from('media').select('*').ilike('file_name', `%${q}%`).limit(50);
+  mediaItems = data || [];
+  filteredItems = mediaItems;
+  const container = document.getElementById('searchResults');
+  if(!data || data.length === 0) {
+    container.innerHTML = `<div class="empty"><h3>No results</h3><p>No files match "${escHtml(q)}"</p></div>`;
+    return;
+  }
+  let html = `<div class="media-grid">`;
+  data.forEach((item, idx) => {
+    const isVid = item.type === 'video';
+    html += `<div class="media-card" data-id="${item.id}" onclick="openLightbox(${idx})">
+      <img src="" alt="${escHtml(item.file_name)}" loading="lazy" style="display:${isVid?'none':'block'}"/>
+      ${isVid ? `<div style="display:flex;align-items:center;justify-content:center;width:100%;height:100%;background:#111"><svg style="width:40px;height:40px;color:#ffffff55" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M2.25 12c0-5.385 4.365-9.75 9.75-9.75s9.75 4.365 9.75 9.75-4.365 9.75-9.75 9.75S2.25 17.385 2.25 12Zm14.024-.983a1.125 1.125 0 0 1 0 1.966l-5.603 3.113A1.125 1.125 0 0 1 9 15.113V8.887c0-.857.921-1.4 1.671-.983l5.603 3.113Z" clip-rule="evenodd"/></svg></div>` : ''}
+      <div class="card-overlay"></div>
+      <div class="card-type-badge">${isVid?'VIDEO':'IMG'}</div>
+      <div class="card-fav ${item.is_favorite?'active':''}" onclick="event.stopPropagation();toggleFav('${item.id}',${!item.is_favorite})">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path fill-rule="evenodd" d="M10.788 3.21c.448-1.077 1.976-1.077 2.424 0l2.082 5.006 5.404.434c1.164.093 1.636 1.545.749 2.305l-4.117 3.527 1.257 5.273c.271 1.136-.964 2.033-1.96 1.425L12 18.354 7.373 21.18c-.996.608-2.231-.29-1.96-1.425l1.257-5.273-4.117-3.527c-.887-.76-.415-2.212.749-2.305l5.404-.434 2.082-5.005Z" clip-rule="evenodd"/></svg>
+      </div>
+    </div>`;
+  });
+  html += '</div>';
+  container.innerHTML = html;
+  data.forEach((item) => {
+    if(item.type === 'image') {
+      getSignedUrl(item.storage_path).then(url => {
+        if(!url) return;
+        const el = container.querySelector(`[data-id="${item.id}"] img`);
+        if(el) el.src = url;
+      });
+    }
+  });
+}
+
+// ── TOAST ──
+let toastTimer;
+function showToast(msg) {
+  const t = document.getElementById('toast');
+  t.textContent = msg; t.classList.add('show');
+  clearTimeout(toastTimer);
+  toastTimer = setTimeout(() => t.classList.remove('show'), 2500);
+}
+
+// ── UTILS ──
+function escHtml(s) { return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
+
+// Close modals on overlay click
+document.querySelectorAll('.modal-overlay').forEach(el => {
+  el.addEventListener('click', e => { if(e.target === el) el.classList.remove('open'); });
+});
+
+// Close fab on outside click
+document.addEventListener('click', e => {
+  if(fabOpen && !e.target.closest('.fab') && !e.target.closest('.fab-menu')) closeFabMenu();
+});
+
+// ── RENAME ──
+let renamingId = null;
+function showRenameModal(id, currentName) {
+  renamingId = id;
+  document.getElementById('renameInput').value = currentName;
+  document.getElementById('renameModal').classList.add('open');
+  setTimeout(() => document.getElementById('renameInput').select(), 100);
+}
+document.getElementById('renameInput').addEventListener('keydown', e => { if(e.key==='Enter') confirmRename(); });
+async function confirmRename() {
+  const newName = document.getElementById('renameInput').value.trim();
+  if(!newName || !renamingId) return;
+  await sb.from('media').update({file_name: newName}).eq('id', renamingId);
+  const item = mediaItems.find(i => i.id === renamingId);
+  if(item) item.file_name = newName;
+  closeModal('renameModal');
+  showToast('✏️ File renamed');
+  renderMedia();
+  renamingId = null;
+}
+
+// ── SHARE LINKS ──
+let shareItemId = null;
+let shareExpiryHours = 1;
+let shareUrlVal = '';
+function showShareModal(id) {
+  shareItemId = id;
+  shareUrlVal = '';
+  document.getElementById('shareUrlBox').style.display = 'none';
+  document.getElementById('genLinkBtn').disabled = false;
+  document.getElementById('genLinkBtn').textContent = 'Generate';
+  selectExpiry(1);
+  document.getElementById('shareModal').classList.add('open');
+}
+function selectExpiry(h) {
+  shareExpiryHours = h;
+  document.querySelectorAll('.expiry-chip').forEach(c => c.classList.toggle('active', +c.dataset.hours === h));
+  shareUrlVal = '';
+  document.getElementById('shareUrlBox').style.display = 'none';
+  document.getElementById('genLinkBtn').disabled = false;
+  document.getElementById('genLinkBtn').textContent = 'Generate';
+}
+async function generateShareLink() {
+  const item = mediaItems.find(i => i.id === shareItemId);
+  if(!item) return;
+  const btn = document.getElementById('genLinkBtn');
+  btn.disabled = true; btn.textContent = 'Generating...';
+  const secs = shareExpiryHours * 3600;
+  const { data } = await sb.storage.from('media').createSignedUrl(item.storage_path, secs);
+  if(data?.signedUrl) {
+    shareUrlVal = data.signedUrl;
+    const box = document.getElementById('shareUrlBox');
+    box.style.display = 'block';
+    box.textContent = shareUrlVal;
+    btn.textContent = 'Regenerate';
+    btn.disabled = false;
+    showToast('🔗 Link generated — tap to copy');
+  } else {
+    btn.textContent = 'Generate'; btn.disabled = false;
+    showToast('Failed to generate link');
+  }
+}
+function copyShareUrl() {
+  if(!shareUrlVal) return;
+  navigator.clipboard.writeText(shareUrlVal).then(() => showToast('📋 Copied to clipboard!')).catch(() => {
+    const ta = document.createElement('textarea');
+    ta.value = shareUrlVal; document.body.appendChild(ta); ta.select(); document.execCommand('copy'); document.body.removeChild(ta);
+    showToast('📋 Copied!');
+  });
+}
+
+// ── MOVE TO FOLDER ──
+let moveTargetFolderId = undefined; // undefined = unset, null = root
+async function bulkMoveToFolder() {
+  if(selectedIds.size === 0) return;
+  document.getElementById('movingCount').textContent = selectedIds.size;
+  moveTargetFolderId = undefined;
+  document.getElementById('confirmMoveBtn').disabled = true;
+  document.getElementById('confirmMoveBtn').style.opacity = '.5';
+  const list = document.getElementById('folderPickList');
+  list.innerHTML = `<div style="color:var(--muted);font-size:13px;padding:8px">Loading folders...</div>`;
+  document.getElementById('moveModal').classList.add('open');
+  const { data } = await sb.from('folders').select('*').order('name');
+  let html = `<div class="folder-pick-item" data-fid="root" onclick="pickFolder(null,this)">
+    <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15ZM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z"/></svg>
+    Root (No folder)
+  </div>`;
+  (data||[]).forEach(f => {
+    html += `<div class="folder-pick-item" data-fid="${f.id}" onclick="pickFolder('${f.id}',this)">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="currentColor"><path d="M19.5 21a3 3 0 003-3v-4.5a3 3 0 00-3-3h-15a3 3 0 00-3 3V18a3 3 0 003 3h15ZM1.5 10.146V6a3 3 0 013-3h5.379a2.25 2.25 0 011.59.659l2.122 2.121c.14.141.331.22.53.22H19.5a3 3 0 013 3v1.146A4.483 4.483 0 0019.5 9h-15a4.483 4.483 0 00-3 1.146z"/></svg>
+      ${escHtml(f.name)}
+    </div>`;
+  });
+  list.innerHTML = html;
+}
+function pickFolder(fid, el) {
+  moveTargetFolderId = fid === null ? null : fid;
+  document.querySelectorAll('.folder-pick-item').forEach(i => i.classList.remove('picked'));
+  el.classList.add('picked');
+  document.getElementById('confirmMoveBtn').disabled = false;
+  document.getElementById('confirmMoveBtn').style.opacity = '1';
+}
+async function confirmMove() {
+  if(moveTargetFolderId === undefined) return;
+  const ids = [...selectedIds];
+  const val = moveTargetFolderId === null ? null : moveTargetFolderId;
+  await sb.from('media').update({folder_id: val}).in('id', ids);
+  closeModal('moveModal');
+  showToast(`📁 Moved ${ids.length} file(s)`);
+  clearSelection();
+  loadMedia();
+}
+
+// ── ZIP DOWNLOAD ──
+async function bulkDownloadZip() {
+  const ids = [...selectedIds];
+  if(ids.length === 0) return;
+  showToast('⏳ Building ZIP...');
+  const items = filteredItems.filter(i => ids.includes(i.id));
+  const zip = new JSZip();
+  const folder = zip.folder('zpvhub_export');
+  for(const item of items) {
+    try {
+      const url = await getSignedUrl(item.storage_path);
+      if(!url) continue;
+      const resp = await fetch(url);
+      const blob = await resp.blob();
+      folder.file(item.file_name, blob);
+    } catch(e) {}
+  }
+  const content = await zip.generateAsync({type:'blob'});
+  const a = document.createElement('a');
+  a.href = URL.createObjectURL(content);
+  a.download = `zpvhub_${Date.now()}.zip`;
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  showToast(`✅ ZIP downloaded (${items.length} files)`);
+  clearSelection();
+}
+
+// ── STATS DASHBOARD ──
+function fmtSize(bytes) {
+  if(bytes < 1024) return bytes + ' B';
+  if(bytes < 1024*1024) return (bytes/1024).toFixed(1) + ' KB';
+  if(bytes < 1024*1024*1024) return (bytes/(1024*1024)).toFixed(1) + ' MB';
+  return (bytes/(1024*1024*1024)).toFixed(2) + ' GB';
+}
+
+async function renderDashboard() {
+  const content = document.getElementById('mainContent');
+  content.innerHTML = `<div class="page-loader"><div class="spinner"></div> Loading stats...</div>`;
+  const { data: allMedia } = await sb.from('media').select('type,is_favorite,size,created_at');
+  const photos = (allMedia||[]).filter(i=>i.type==='image').length;
+  const videos = (allMedia||[]).filter(i=>i.type==='video').length;
+  const favs = (allMedia||[]).filter(i=>i.is_favorite).length;
+  const totalSize = (allMedia||[]).reduce((s,i)=>s+(i.size||0),0);
+  const STORAGE_LIMIT = 1024*1024*1024; // 1 GB display limit
+  const pct = Math.min(100, (totalSize/STORAGE_LIMIT)*100).toFixed(1);
+
+  content.innerHTML = `
+    <div class="dashboard">
+      <div class="stat-card">
+        <div class="stat-icon">🖼️</div>
+        <div class="stat-val">${photos}</div>
+        <div class="stat-lbl">Photos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">🎬</div>
+        <div class="stat-val">${videos}</div>
+        <div class="stat-lbl">Videos</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">⭐</div>
+        <div class="stat-val">${favs}</div>
+        <div class="stat-lbl">Favorites</div>
+      </div>
+      <div class="stat-card">
+        <div class="stat-icon">💾</div>
+        <div class="stat-val" style="font-size:16px">${fmtSize(totalSize)}</div>
+        <div class="stat-lbl">Used</div>
+      </div>
+    </div>
+    <div class="storage-bar-wrap">
+      <div class="storage-bar-header">
+        <span class="storage-bar-title">Storage Usage</span>
+        <span class="storage-bar-pct">${pct}%</span>
+      </div>
+      <div class="storage-track"><div class="storage-fill" style="width:${pct}%"></div></div>
+      <div class="storage-detail">${fmtSize(totalSize)} used of 1 GB</div>
+    </div>
+    ${await renderUploadHistory(allMedia)}
+  `;
+}
+
+async function renderUploadHistory(allMedia) {
+  if(!allMedia || allMedia.length === 0) return '<div class="empty"><h3>No uploads yet</h3></div>';
+  const sorted = [...allMedia].sort((a,b)=>new Date(b.created_at)-new Date(a.created_at)).slice(0,20);
+  let html = `<div class="section-label" style="margin-top:8px">Recent Uploads</div><div class="history-list">`;
+  sorted.forEach(item => {
+    const d = new Date(item.created_at);
+    const rel = relativeTime(d);
+    html += `<div class="history-item">
+      <div class="history-icon">${item.type==='video'?'🎬':'🖼️'}</div>
+      <div style="flex:1;min-width:0">
+        <div class="history-name">${escHtml(item.file_name||'Unnamed')}</div>
+        <div class="history-meta">${fmtSize(item.size||0)}</div>
+      </div>
+      <div class="history-time">${rel}</div>
+    </div>`;
+  });
+  html += '</div>';
+  return html;
+}
+
+function relativeTime(date) {
+  const diff = Date.now() - date.getTime();
+  const mins = Math.floor(diff/60000);
+  if(mins < 1) return 'Just now';
+  if(mins < 60) return `${mins}m ago`;
+  const hrs = Math.floor(mins/60);
+  if(hrs < 24) return `${hrs}h ago`;
+  const days = Math.floor(hrs/24);
+  if(days < 30) return `${days}d ago`;
+  return date.toLocaleDateString();
+}
+
+// ── SETTINGS / THEME ──
+const THEMES = [
+  {id:'default', name:'ZPv Red', bg:'#0f0f10', accent:'#FF6154'},
+  {id:'pure-black', name:'Pure Black', bg:'#000000', accent:'#FF6154'},
+  {id:'cyber-teal', name:'Cyber Teal', bg:'#000000', accent:'#00e5cc'},
+  {id:'neon-violet', name:'Neon Violet', bg:'#000000', accent:'#b94fff'},
+  {id:'amber-dark', name:'Amber Dark', bg:'#000000', accent:'#FFB300'},
+  {id:'blood-red', name:'Blood Red', bg:'#000000', accent:'#ff1744'},
+  {id:'ice-blue', name:'Ice Blue', bg:'#000000', accent:'#40c4ff'},
+  {id:'toxic-green', name:'Toxic Green', bg:'#000000', accent:'#39ff14'},
+  {id:'rose-gold', name:'Rose Gold', bg:'#000000', accent:'#ff6b9d'},
+  {id:'deep-space', name:'Deep Space', bg:'#000000', accent:'#7c83ff'},
+];
+let activeTheme = localStorage.getItem('zpv_theme') || 'default';
+
+function applyTheme(id) {
+  activeTheme = id;
+  localStorage.setItem('zpv_theme', id);
+  document.body.className = id === 'default' ? '' : `theme-${id}`;
+}
+
+function renderSettings() {
+  const content = document.getElementById('mainContent');
+  const swatches = THEMES.map(t => `
+    <div class="theme-swatch ${activeTheme===t.id?'active':''}" 
+         style="background:${t.bg};color:${t.accent};border-color:${activeTheme===t.id?t.accent:'transparent'}"
+         onclick="applyTheme('${t.id}');renderSettings()">
+      <div class="swatch-dot" style="background:${t.accent}"></div>
+      <div class="swatch-name" style="color:${t.accent === '#39ff14' ? t.accent : '#ffffffcc'}">${t.name}</div>
+    </div>
+  `).join('');
+
+  content.innerHTML = `
+    <div class="theme-picker-wrap">
+      <div class="theme-picker-title">🎨 AMOLED Themes</div>
+      <div class="theme-grid">${swatches}</div>
+    </div>
+    <div style="padding:0 16px 100px">
+      <div class="section-label" style="margin-bottom:8px">Account</div>
+      <div class="stat-card" style="flex-direction:row;align-items:center;gap:10px">
+        <div style="font-size:22px">👤</div>
+        <div>
+          <div style="font-weight:700;font-size:14px">Zade Admin</div>
+          <div style="font-size:12px;color:var(--muted)">${ADMIN_EMAIL}</div>
+        </div>
+        <button onclick="doLogout()" style="margin-left:auto;padding:7px 14px;border-radius:99px;background:var(--surface2);border:1px solid var(--border);color:var(--muted);font-size:12px;font-weight:600;cursor:pointer;font-family:var(--font)">Sign Out</button>
+      </div>
+    </div>
+  `;
+}
+
+// ── INIT ──
+applyTheme(activeTheme);
+checkSession();
+</script>
+</body>
+</html>
